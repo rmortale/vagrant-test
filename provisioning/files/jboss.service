@@ -1,0 +1,13 @@
+[Unit]
+Description=JBoss_EAP service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c "/home/vagrant/jboss-eap-7.4/bin/standalone.sh -c standalone-full.xml -b 0.0.0.0 -bmanagement 0.0.0.0"
+Restart=always
+RestartSec=2
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

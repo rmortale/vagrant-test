@@ -1,0 +1,49 @@
+---
+- hosts: all
+  #become: true
+  tasks:
+    - name: ensure openjdk and zip are installed
+      become: true
+      apt:
+        pkg:
+          - openjdk-11-jdk-headless
+          - unzip
+
+    - name: Extract eap archive
+      unarchive:
+        src: jboss-eap-7.4.0.zip
+        dest: /home/vagrant
+        creates: "/home/vagrant/jboss-eap-7.4/version.txt"
+        owner: vagrant
+        group: vagrant
+        mode: 0755
+
+    - name: Determine if patch can be applied
+      command: "/home/vagrant/jboss-eap-7.4/bin/jboss-cli.sh 'patch info'"
+      become: true
+      become_user: vagrant
+      register: jboss_patch_info
+      changed_when: no
+
+    - name: Apply eap patch
+      command: /home/vagrant/jboss-eap-7.4/bin/jboss-cli.sh "patch apply /vagrant/provisioning/files/jboss-eap-7.4.8-patch.zip"
+      become: true
+      become_user: vagrant
+      when:
+        - "'base' in jboss_patch_info.stdout"
+
+    - name: create service
+      become: true
+      copy:
+        src: jboss.service
+        dest: /etc/systemd/system
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: enable and start eap service
+      become: true
+      service:
+        name: jboss.service
+        state: started
+        enabled: yes
